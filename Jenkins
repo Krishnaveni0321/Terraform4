@@ -1,23 +1,43 @@
-pipeline {
+
+   pipeline {
     agent any
 
     stages {
         stage('Checkout') {
             steps {
-                git branch: 'main', url: https://github.com/Krishnaveni0321/Terraform4.git'
+                git branch: 'main', url: 'https://github.com/Krishnaveni0321/Terraform4.git'
             }
         }
 
-        stage('Terraform Init') {
+        stage('Initialize Terraform') {
             steps {
-                sh 'terraform init'
+                withCredentials([usernamePassword(credentialsId: 'aws-credentials', usernameVariable: 'AWS_ACCESS_KEY_ID', passwordVariable: 'AWS_SECRET_ACCESS_KEY')]) {
+                    // Initialize Terraform with AWS credentials injected
+                    sh 'terraform init'
+                }
             }
         }
 
         stage('Terraform Apply') {
             steps {
-                sh 'terraform apply -auto-approve'
+                withCredentials([usernamePassword(credentialsId: 'aws-credentials', usernameVariable: 'AWS_ACCESS_KEY_ID', passwordVariable: 'AWS_SECRET_ACCESS_KEY')]) {
+                    sh '''
+                    terraform apply -auto-approve
+                    '''
+                }
             }
+        }
+    }
+
+    post {
+        always {
+            echo 'Pipeline execution completed.'
+        }
+        success {
+            echo 'Pipeline executed successfully!'
+        }
+        failure {
+            echo 'Pipeline execution failed.'
         }
     }
 }
