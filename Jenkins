@@ -2,6 +2,10 @@
    pipeline {
     agent any
 
+    environment {
+        AWS_DEFAULT_REGION = 'ap-northeast-3'  // Set your AWS region
+    }
+
     stages {
         stage('Checkout') {
             steps {
@@ -11,7 +15,8 @@
 
         stage('Initialize Terraform') {
             steps {
-                withCredentials([usernamePassword(credentialsId: 'aws-credentials', usernameVariable: 'AWS_ACCESS_KEY_ID', passwordVariable: 'AWS_SECRET_ACCESS_KEY')]) {
+                // Use AWS credentials from Jenkins
+                withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-credentials']]) {
                     // Initialize Terraform with AWS credentials injected
                     sh 'terraform init'
                 }
@@ -20,24 +25,12 @@
 
         stage('Terraform Apply') {
             steps {
-                withCredentials([usernamePassword(credentialsId: 'aws-credentials', usernameVariable: 'AWS_ACCESS_KEY_ID', passwordVariable: 'AWS_SECRET_ACCESS_KEY')]) {
-                    sh '''
-                    terraform apply -auto-approve
-                    '''
+                // Use AWS credentials from Jenkins
+                withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-credentials']]) {
+                    // Apply Terraform configuration
+                    sh 'terraform apply -auto-approve'
                 }
             }
-        }
-    }
-
-    post {
-        always {
-            echo 'Pipeline execution completed.'
-        }
-        success {
-            echo 'Pipeline executed successfully!'
-        }
-        failure {
-            echo 'Pipeline execution failed.'
         }
     }
 }
