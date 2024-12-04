@@ -1,33 +1,26 @@
-
-   pipeline {
+pipeline {
     agent any
-
     environment {
         AWS_DEFAULT_REGION = 'ap-northeast-3'  // Set your AWS region
     }
-
     stages {
-        stage('Checkout') {
+        stage('Clone') {
             steps {
                 git branch: 'main', url: 'https://github.com/Krishnaveni0321/Terraform4.git'
             }
         }
-
         stage('Initialize Terraform') {
             steps {
-                // Use AWS credentials from Jenkins
-                withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-credentials']]) {
+                withCredentials([usernamePassword(credentialsId: 'aws-credentials', usernameVariable: 'AWS_ACCESS_KEY_ID', passwordVariable: 'AWS_SECRET_ACCESS_KEY')]) {
                     // Initialize Terraform with AWS credentials injected
                     sh 'terraform init'
                 }
             }
         }
-
-        stage('Terraform Apply') {
+        stage('Execute Terraform Apply') {
             steps {
-                // Use AWS credentials from Jenkins
-                withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-credentials']]) {
-                    // Apply Terraform configuration
+                withCredentials([usernamePassword(credentialsId: 'aws-credentials', usernameVariable: 'AWS_ACCESS_KEY_ID', passwordVariable: 'AWS_SECRET_ACCESS_KEY')]) {
+                    // Apply Terraform configuration with AWS credentials injected
                     sh 'terraform apply -auto-approve'
                 }
             }
